@@ -42,40 +42,41 @@ class TtsController extends Controller
 
         $processedText = $this->applyRegexReplacements($text);
 
-        \Log::info('Processed TTS text', [
+        Log::info('Processed TTS text', [
             'text' => $processedText
         ]);
 
-        $response = Http::withHeaders(headers: [
-            'verify' => false, 
-        ])->withHeaders([
-            'x-goog-api-key' => config(key: 'services.gemini.api_key'),
-            'Content-Type'  => 'application/json',
-        ])->post(
-            'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent',
-            [
-                'contents' => [
-                    [
-                        'parts' => [
-                            [
-                                'text' => "say: {$processedText}"
+        $response = Http::withoutVerifying()
+            ->withHeaders([
+                'x-goog-api-key' => config('services.gemini.api_key'),
+                'Content-Type' => 'application/json',
+            ])
+            ->post(
+                'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-tts:generateContent',
+                [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                [
+                                    'text' => "say: {$processedText}"
+                                ]
                             ]
                         ]
-                    ]
-                ],
-                'generationConfig' => [
-                    'responseModalities' => ['AUDIO'],
-                    'speechConfig' => [
-                        'voiceConfig' => [
-                            'prebuiltVoiceConfig' => [
-                                'voiceName' => $voice
+                    ],
+                    'generationConfig' => [
+                        'responseModalities' => ['AUDIO'],
+                        'speechConfig' => [
+                            'voiceConfig' => [
+                                'prebuiltVoiceConfig' => [
+                                    'voiceName' => $voice
+                                ]
                             ]
                         ]
-                    ]
-                ],
-                'model' => 'gemini-2.5-flash-preview-tts'
-            ]
-        );
+                    ],
+                    'model' => 'gemini-2.5-flash-preview-tts'
+                ]
+            );
+
 
        
         // \Log::info('My Gemini raw response', config(key: 'services.gemini.key'));
@@ -154,7 +155,7 @@ class TtsController extends Controller
 
     private function applyRegexReplacements(string $text): string
     {
-        $path = storage_path('app/regex_replacements.json');
+        $path = storage_path('regex_replacements.json');
 
         if (!file_exists($path)) {
             return $text;
